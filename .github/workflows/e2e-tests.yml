@@ -37,25 +37,22 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Get PR branch name
+      - name: Get branch name for Docker tag
         id: get-branch
-        env:
-          REPO: ${{ github.repository }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if [ "${{ github.event_name }}" = "issue_comment" ]
-          then
-            echo ::set-output name=branch::$(gh pr view ${{ github.event.issue.number }} --repo $REPO --json headRefName --jq '.headRefName')
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "branch=${{ github.head_ref }}" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event_name }}" = "issue_comment" ]; then
+            echo "branch=$(gh pr view ${{ github.event.issue.number }} --json headRefName --jq '.headRefName')" >> $GITHUB_OUTPUT
           else
-            echo ::set-output name=branch::${{ github.ref_name }}
+            echo "branch=${{ github.ref_name }}" >> $GITHUB_OUTPUT
           fi
-
       - name: Sanitize branch name for Docker tag
         id: sanitize-tag
         run: |
           TAG="${{ steps.get-branch.outputs.branch }}"
           TAG_SAFE="${TAG//\//-}"
-          echo "::set-output name=tag::$TAG_SAFE"
+          echo "tag=$TAG_SAFE" >> $GITHUB_OUTPUT
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
