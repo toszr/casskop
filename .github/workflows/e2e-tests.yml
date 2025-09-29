@@ -14,12 +14,12 @@ jobs:
 
   casskop-image:
     runs-on: ubuntu-latest
-    if: |
-      github.event_name == 'workflow_dispatch' || (
-        github.event.issue.pull_request &&
-        github.event.comment.user.login == github.repository_owner &&
-        contains(github.event.comment.body, '/kuttl-tests')
-      )
+#    if: |
+#      github.event_name == 'workflow_dispatch' || (
+#        github.event.issue.pull_request &&
+#        github.event.comment.user.login == github.repository_owner &&
+#        contains(github.event.comment.body, '/kuttl-tests')
+#      )
     permissions:
       packages: write
     steps:
