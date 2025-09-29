@@ -50,12 +50,19 @@ jobs:
             echo ::set-output name=branch::${{ github.ref_name }}
           fi
 
+      - name: Sanitize branch name for Docker tag
+        id: sanitize-tag
+        run: |
+          TAG="${{ steps.get-branch.outputs.branch }}"
+          TAG_SAFE="${TAG//\//-}"
+          echo "::set-output name=tag::$TAG_SAFE"
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
         with:
           context: .
           file: docker/casskop/Dockerfile
-          tags: ghcr.io/${{ steps.lower-repo.outputs.repository }}:${{ steps.get-branch.outputs.branch }}
+          tags: ghcr.io/${{ steps.lower-repo.outputs.repository }}:${{ steps.sanitize-tag.outputs.tag }}
           push: true
 
   install-kuttl:
@@ -150,6 +157,6 @@ jobs:
         run: |
           chmod u+x kuttl
           PATH=$PWD:$PATH
-          helm install casskop charts/casskop --set image.tag=${{ steps.get-branch.outputs.branch }} --set image.repository=ghcr.io/${{ steps.lower-repo.outputs.repository }}
+          helm install casskop charts/casskop --set image.tag=${{ steps.sanitize-tag.outputs.tag }} --set image.repository=ghcr.io/${{ steps.lower-repo.outputs.repository }}
           cd test/kuttl/
           kuttl test --test ${{ matrix.test-name }} --namespace default --skip-delete
